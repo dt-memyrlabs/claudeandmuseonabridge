@@ -47,3 +47,40 @@ and a `windows-mcp` server on the PC.
 - **Pin chat calls.** Without a pin, a resumed session once treated a
   chat message as a work order and ran off with it. Chat mode appends a
   system prompt: plain text, no tools, no tasks.
+
+## The MCP-first variant (faster transport)
+
+The file bridge above works, but each message pays for the file
+hand-off and the polling loop — measured here at ~29 seconds of pure
+overhead on a reply Claude produced in ~2 seconds. The variant in
+`claude_mcp_server.py` removes that layer:
+
+1. Put `claude_mcp_server.py` on the Windows PC and create a bearer
+   key file next to it named `mcp_auth_key` (any long random string;
+   treat it like a password). The server refuses to start without it.
+2. Start it: `python claude_mcp_server.py` (listens on port 8765;
+   run it hidden or as a scheduled task for daily use).
+3. On the coordinator, set `CLAUDE_MCP_URL=http://<pc-address>:8765`
+   and `CLAUDE_MCP_KEY_FILE` to a file holding the same key, then use
+   `claude_mcp_client.py`: `ask [--chat ID] [--tools A,B] "prompt"`.
+4. If the coordinator reaches the PC through a proxy, the proxy must
+   be one that can route to the PC's private address — a proxy that
+   cannot will return empty replies while the server is healthy.
+
+Same trust rules as the file bridge: chat calls are hard-locked to
+zero tools, tool calls name their tools per call, sessions persist
+per chat id on the server.
+
+## Signing key (unattended mode of the file bridge)
+
+```
+mkdir -p ~/.config/claude-bridge && chmod 700 ~/.config/claude-bridge
+openssl genpkey -algorithm ed25519 -out ~/.config/claude-bridge/signing_key.pem
+chmod 600 ~/.config/claude-bridge/signing_key.pem
+openssl pkey -in ~/.config/claude-bridge/signing_key.pem -pubout -out ~/.config/claude-bridge/signing_pub.pem
+```
+
+Copy `signing_pub.pem` and `verify_sig.py` (a small pure-Python
+Ed25519 verifier) to the PC's `.muse-bridge` folder. The private key
+never leaves the coordinator. Signatures cover the LF-normalized
+text of a message, because file channels may store CRLF endings.
