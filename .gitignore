@@ -1,0 +1,7 @@
+__pycache__/
+*.log
+bridge_state.json
+bridge_log.txt
+auth_key
+.env
+*.bak
