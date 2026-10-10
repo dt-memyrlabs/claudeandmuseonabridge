@@ -51,6 +51,9 @@ Human (approvals)
   quiet batched polling, a hard tool lock on chat runs, a config guard,
   task envelopes, a run ledger, and Ed25519-signed runs — unattended
   tasks travel as signed files the reviewer verifies before acting.
+- `claude_mcp_server.py` + `claude_mcp_client.py` — the MCP-first
+  variant: Claude wrapped as a single MCP tool on the PC. Same trust
+  rules, ~2-second transport instead of the file bridge's ~30.
 - `bridge_health.py` — the hourly heartbeat probe: one short run, a
   stamped last-healthy time, silence unless something is broken.
 - `windows_mcp_client.py` — the small MCP client the bridge talks through.
