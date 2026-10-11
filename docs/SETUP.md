@@ -48,7 +48,7 @@ and a `windows-mcp` server on the PC.
   chat message as a work order and ran off with it. Chat mode appends a
   system prompt: plain text, no tools, no tasks.
 
-## The MCP-first variant (faster transport)
+## The MCP transport (the default)
 
 The file bridge above works, but each message pays for the file
 hand-off and the polling loop — measured here at ~29 seconds of pure
