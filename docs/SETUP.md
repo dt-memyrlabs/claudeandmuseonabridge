@@ -84,3 +84,31 @@ Copy `signing_pub.pem` and `verify_sig.py` (a small pure-Python
 Ed25519 verifier) to the PC's `.muse-bridge` folder. The private key
 never leaves the coordinator. Signatures cover the LF-normalized
 text of a message, because file channels may store CRLF endings.
+
+## The PC agent — do not skip it, and do not mistake it for a replacement
+
+`pc_agent_server.py` is the coordinator's own small agent on the PC
+(four tools: ping, exec, read_file, write_file). It is **not** a
+windows-mcp replacement and does not compete with it: windows-mcp does
+desktop control (mouse, keyboard, screenshots); the PC agent does none
+of that and windows-mcp stays installed and in use.
+
+The agent exists because windows-mcp runs as a scheduled task that
+sometimes stops — and when it stops, a coordinator whose only channel
+was windows-mcp has no hands left on the PC at all. The agent is the
+independent second channel: it restarts the other pieces (it has
+restarted the MCP server and the windows-mcp task in production), reads
+logs, and applies config fixes. One of its four tools is full shell
+exec, so a tool count is not a capability comparison. An install that
+skips the agent has no self-recovery: the first time windows-mcp stops,
+a human has to walk to the PC.
+
+## Autostart (learned the hard way)
+
+Nothing above survives a reboot by itself. What works without admin
+rights: shortcuts in the user's Startup folder for the PC agent, the
+tray icon, and the MCP server — the MCP server in particular has no
+other autostart, so without its shortcut it is simply gone after a
+reboot and the coordinator finds a dead port. The windows-mcp task is
+the odd one out: it does not autostart reliably, which is one more
+reason the PC agent (which can start it) needs to be running.
